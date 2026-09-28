@@ -12,3 +12,33 @@ node_modules/
 .vercel/
 *.tsbuildinfo
 .DS_Store
+
+# --- Python ---
+*.py[cod]
+*.egg-info/
+.eggs/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.sqlite
+*.sqlite3
+apix.db
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+# --- Node (for web/ etc, owned by other engineers) ---
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+out/
+# --- Env / secrets ---
+# --- Editor / OS ---
+.vscode/
+.idea/
+Thumbs.db
+# --- Logs ---
+*.log

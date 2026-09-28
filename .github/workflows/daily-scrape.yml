@@ -1,0 +1,54 @@
+name: Daily APIx Scrape
+
+on:
+  schedule:
+    # 03:00 UTC daily (~08:30 IST)
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  run-daily:
+    runs-on: ubuntu-latest
+    env:
+      # If DATABASE_URL secret is not configured, this falls back to a
+      # local SQLite file inside the runner (apix.db). That's fine for CI
+      # smoke-testing but means results are NOT persisted between runs —
+      # set the DATABASE_URL repo/org secret to a Postgres/Supabase URL
+      # for real production use.
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SIMULATOR_SEED: ${{ vars.SIMULATOR_SEED || '42' }}
+      SCRAPE_MAX_RPS: ${{ vars.SCRAPE_MAX_RPS || '0.5' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pipeline dependencies
+        run: |
+          cd pipeline
+          pip install -e ".[dev]"
+
+      - name: Note DB target
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::DATABASE_URL secret not set — using local SQLite (apix.db) for this CI run. Results will not persist between runs. Set the DATABASE_URL repo secret for production."
+          else
+            echo "Using configured DATABASE_URL."
+          fi
+
+      - name: Run daily pipeline (scrape -> clean -> index)
+        run: |
+          python -m apix.pipeline run-daily
+
+      - name: Run backtest
+        run: |
+          python -m apix.pipeline backtest
+
+      - name: Run tests
+        run: |
+          cd pipeline
+          python -m pytest tests/ -q
