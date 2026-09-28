@@ -1,0 +1,10 @@
+# PLACEHOLDER — real DGCA monthly average domestic fare data was not
+# available in this build environment. These rows are illustrative dummy
+# values only, for wiring/testing the backtest pipeline. Replace with
+# actual DGCA "Domestic Airfare" publication data before relying on any
+# comparison drawn from this file.
+month,route_id,avg_fare,source_note
+2025-08,BOM-DEL,5400,PLACEHOLDER
+2025-09,BOM-DEL,5600,PLACEHOLDER
+2025-08,BLR-DEL,5100,PLACEHOLDER
+2025-09,BLR-DEL,5300,PLACEHOLDER

@@ -1,0 +1,11 @@
+route_id,origin,dest,dgca_pax_share,active
+BOM-DEL,BOM,DEL,0.22,true
+BLR-DEL,BLR,DEL,0.14,true
+BOM-BLR,BOM,BLR,0.12,true
+CCU-DEL,CCU,DEL,0.09,true
+BLR-HYD,BLR,HYD,0.07,true
+DEL-MAA,DEL,MAA,0.10,true
+DEL-HYD,DEL,HYD,0.08,true
+BOM-HYD,BOM,HYD,0.06,true
+BOM-MAA,BOM,MAA,0.07,true
+AMD-DEL,AMD,DEL,0.05,true
