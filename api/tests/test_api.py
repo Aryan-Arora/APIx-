@@ -207,3 +207,25 @@ def test_missing_database_fails_without_mock_fallback():
         result = c.get("/api/v1/index", headers={"X-API-Key": "key"})
         assert result.status_code == 503
         assert result.headers["X-Data-Mode"] == "database"
+
+
+def test_error_envelopes(client):
+    for response in [client.get("/api/v1/missing"), client.post("/api/v1/index")]:
+        assert set(response.json()) == {"error", "detail"}
+
+
+def test_sql_all_scopes_and_endpoints(sql_client):
+    for path in [
+        "routes",
+        "heatmap?metric=index",
+        "carriers",
+        "scrape-runs",
+        "backtest",
+    ]:
+        response = sql_client.get("/api/v1/" + path)
+        assert response.status_code == 200, response.text
+    result = sql_client.get(
+        "/api/v1/carriers?from=2026-09-28&to=2026-09-28&include_synthetic=false"
+    ).json()
+    assert result[0]["avg_fare"] == 1500
+    assert result[0]["index"] == 110

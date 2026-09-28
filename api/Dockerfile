@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 WORKDIR /service
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.lock.txt .
+RUN pip install --no-cache-dir -r requirements.lock.txt
 COPY app ./app
 RUN useradd --create-home apix
 USER apix
