@@ -1,0 +1,57 @@
+[
+  {
+    "scraped_at": "2026-09-27 00:00:00",
+    "source": "simulator",
+    "source_type": "simulator",
+    "route_id": "BOM-DEL",
+    "carrier": "IndiGo",
+    "flight_no": "6E549",
+    "total_fare": 6530.0,
+    "lead_bucket": "T+1",
+    "is_synthetic": true
+  },
+  {
+    "scraped_at": "2026-09-27 00:00:00",
+    "source": "simulator",
+    "source_type": "simulator",
+    "route_id": "BOM-DEL",
+    "carrier": "Air India",
+    "flight_no": "AI917",
+    "total_fare": 7310.0,
+    "lead_bucket": "T+1",
+    "is_synthetic": true
+  },
+  {
+    "scraped_at": "2026-09-27 00:00:00",
+    "source": "simulator",
+    "source_type": "simulator",
+    "route_id": "BOM-DEL",
+    "carrier": "Air India Express",
+    "flight_no": "IX661",
+    "total_fare": 6530.0,
+    "lead_bucket": "T+1",
+    "is_synthetic": true
+  },
+  {
+    "scraped_at": "2026-09-27 00:00:00",
+    "source": "simulator",
+    "source_type": "simulator",
+    "route_id": "BOM-DEL",
+    "carrier": "Akasa Air",
+    "flight_no": "QP904",
+    "total_fare": 7750.0,
+    "lead_bucket": "T+1",
+    "is_synthetic": true
+  },
+  {
+    "scraped_at": "2026-09-27 00:00:00",
+    "source": "simulator",
+    "source_type": "simulator",
+    "route_id": "BOM-DEL",
+    "carrier": "SpiceJet",
+    "flight_no": "SG211",
+    "total_fare": 8780.0,
+    "lead_bucket": "T+1",
+    "is_synthetic": true
+  }
+]
