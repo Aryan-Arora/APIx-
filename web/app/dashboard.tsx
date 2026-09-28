@@ -931,7 +931,11 @@ export default function Dashboard() {
                 {[
                   ["MAPE", backtest.data?.summary.mape, "%"],
                   ["Correlation", backtest.data?.summary.corr, ""],
-                  ["Direction agreement", backtest.data?.summary.direction, ""],
+                  [
+                    "Direction agreement (fraction)",
+                    backtest.data?.summary.direction,
+                    "",
+                  ],
                 ].map(([label, value, unit]) => (
                   <article className="stat-card" key={String(label)}>
                     <div className="stat-label">{label}</div>
@@ -964,9 +968,9 @@ export default function Dashboard() {
                     <Landmark size={28} />
                     <strong>Awaiting a verified reference series</strong>
                     <p>
-                      No reference values or accuracy scores have been
-                      fabricated. Engineer A’s backtest results will appear here
-                      after integration.
+                      No valid overlapping reference results are available.
+                      Placeholder inputs do not establish accuracy; consult the
+                      pipeline notes above.
                     </p>
                   </div>
                 ) : (

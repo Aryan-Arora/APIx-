@@ -7,8 +7,12 @@
 5. Basket and lead weights are assumptions until replaced with sourced passenger-share and booking-distribution evidence. Labels state this limitation.
 6. One minute of requests is limited per direct client IP per API process. Proxy trust and distributed rate limiting are production follow-ups. The public demo key is not a confidentiality boundary.
 7. Next.js public variables are build-time values. Changing the API URL/key requires a rebuild. Render free-tier cold starts can exceed three seconds; the dashboard handles delayed/error responses, but this is not a latency guarantee.
-8. No local Python 3.11 runtime was present at kickoff; the developer environment has Python 3.13. CI and the Docker image target 3.11. Record actual CI results before claiming 3.11 validation.
+8. Local API tests now pass on Python 3.11.15 as well as 3.13. CI and the Docker image target 3.11; production Postgres remains unverified until credentials are supplied.
 9. Reference summaries are pipeline-wide and do not support synthetic-mode filtering in the frozen contract. That independence is explicit in the UI.
 10. Database filters assume UTC observation timestamps. Database role permissions, RLS, TLS certificate verification, live table size, pool capacity and reference units require production review with the actual deployment.
 
 Future work: verified traffic weights; longer observed history; approved source integrations; index-specific CPI backtest schema; cell-level imputation/coverage reports; distributed limits; persistent filter URLs; bounded/cached aggregate endpoints; production performance measurement.
+
+## Integrated pipeline issues awaiting Engineer A
+
+The integrated apix-v1 engine trims 5% per tail instead of the specified 10%; it counts observed dates rather than calendar days for carry-forward and base-period selection. Backfill --days 45 generates 46 dates. One stored route ID is BOM-BLR rather than alphabetical BLR-BOM; the serving layer resolves bidirectional aliases to actual stored IDs. Fare MAPE compares index points with rupee fares and is withheld by the serving API for A’s current metric name. Placeholder-reference metrics are also withheld. See HANDOFF_NOTES.md for the concrete correction requests. Pipeline tests currently pass but do not certify these contract points.

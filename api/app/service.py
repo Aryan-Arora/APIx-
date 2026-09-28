@@ -17,9 +17,24 @@ def canonical(route: str) -> str:
     return "-".join(sorted(parts))
 
 
-def scope_name(scope: str) -> str:
+def resolve_route(store: Store, route: str) -> str:
+    """Resolve bidirectional input to the actual stored ID without changing data."""
+    normalized = canonical(route)
+    if normalized == "all":
+        return normalized
+    identifiers = [r["route_id"] for r in store.rows("routes")]
+    if route.upper() in identifiers:
+        return route.upper()
+    return next((r for r in identifiers if canonical(r) == normalized), normalized)
+
+
+def scope_name(scope: str, store: Store) -> str:
     """Normalize route scopes without changing other scope identifiers."""
-    return "route:" + canonical(scope[6:]) if scope.startswith("route:") else scope
+    return (
+        "route:" + resolve_route(store, scope[6:])
+        if scope.startswith("route:")
+        else scope
+    )
 
 
 def bounds(start: date | None, end: date | None) -> None:
@@ -38,7 +53,7 @@ def index_rows(
 ) -> list[dict]:
     """Read exactly one stored synthetic mode, never combine index series."""
     bounds(start, end)
-    scope = scope_name(scope)
+    scope = scope_name(scope, store)
     if store.mock is not None:
         rows = [
             r
@@ -90,7 +105,7 @@ def quote_filter(
         params["synthetic"] = False
     if route != "all":
         conditions.append("route_id = :route")
-        params["route"] = canonical(route)
+        params["route"] = route
     if carrier:
         conditions.append("carrier = :carrier")
         params["carrier"] = carrier
@@ -121,7 +136,7 @@ def mock_quotes(
     valid_only: bool = True,
 ) -> list[dict]:
     bounds(start, end)
-    route = canonical(route)
+    route = resolve_route(store, route)
     return [
         r
         for r in store.mock["clean_quotes"]
@@ -166,6 +181,7 @@ def quote_groups(
             )
             for k, rows in groups.items()
         ]
+    route = resolve_route(store, route)
     where, params = quote_filter(synthetic, route, None, start, end, True)
     date_expr = (
         "date(scraped_at)"

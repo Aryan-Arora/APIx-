@@ -22,6 +22,7 @@ from .service import (
     mock_quotes,
     quote_filter,
     quote_groups,
+    resolve_route,
 )
 
 StoreDep = Annotated[Store, Depends(get_store)]
@@ -31,10 +32,10 @@ METHOD = dict(
     title="A fixed basket. A consistent measure.",
     formula="APIx(t) = 100 × exp(Σ w[r,b] × ln(P[r,b,t] / P0[r,b]))",
     steps=[
-        "For each route and lead bucket, trim 10% of quotes from each tail and take the geometric mean of valid total fares.",
-        "The base price is the arithmetic mean of elementary prices in the first seven days. The base index is 100.",
+        "Contract: trim 10% of quotes from each tail in each route/lead cell, then take the geometric mean. Current integrated apix-v1 code trims 5% per tail; correction is pending.",
+        "The base price is the arithmetic mean of elementary prices in the first seven days. Current apix-v1 selects seven observed dates; with continuous history these coincide. Base index is 100.",
         "Multiply route passenger-share weights by advance-purchase weights; combine price relatives geometrically.",
-        "Carry a missing cell forward for up to three days, then drop it and renormalise weights.",
+        "Contract: carry missing cells forward for at most three calendar days. Current apix-v1 counts observed dates instead; calendar-gap correction is pending.",
         "Weekly and monthly indices are arithmetic means of daily indices. Scoped indices renormalise the restricted basket.",
         "Live-only and combined-history indices are computed separately. Average fare charts use valid quote arithmetic means, not index values.",
     ],
@@ -297,6 +298,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         offset: Annotated[int, Query(ge=0)] = 0,
         include_synthetic: bool = True,
     ):
+        route = resolve_route(store, route)
         where, params = quote_filter(
             include_synthetic, route, carrier, from_, to, False
         )
@@ -327,12 +329,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             notes.append(
                 "Reference results unavailable. No accuracy score can be claimed."
             )
-        return dict(
-            summary=dict(
-                mape=metrics.get("mape"),
-                corr=metrics.get("correlation", metrics.get("corr")),
-                direction=metrics.get("direction_agreement", metrics.get("direction")),
+        aliases = {
+            "mape": ("mape", "mape_vs_dgca_fares"),
+            "corr": ("correlation", "corr", "correlation_vs_cpi_transport_group"),
+            "direction": (
+                "direction_agreement",
+                "direction",
+                "direction_agreement_vs_cpi_transport_group",
             ),
+        }
+        summary = {
+            key: next((metrics[name] for name in names if name in metrics), None)
+            for key, names in aliases.items()
+        }
+        placeholder = any(
+            "placeholder" in str(r.get("source_note", "")).lower() for r in rows
+        ) or any("placeholder" in n.lower() for n in notes)
+        if placeholder:
+            notes.insert(
+                0,
+                "PLACEHOLDER reference inputs: calculated metrics are illustrative and are not published as validation scores.",
+            )
+            summary = dict(mape=None, corr=None, direction=None)
+        if "mape_vs_dgca_fares" in metrics:
+            summary["mape"] = None
+            notes.insert(
+                0,
+                "Current pipeline fare MAPE is withheld: apix-v1 compares index points with INR fares. Engineer A must correct the units before validation.",
+            )
+        return dict(
+            summary=summary,
             rows=rows,
             notes=notes,
             provenance=(

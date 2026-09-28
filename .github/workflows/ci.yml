@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           if [ -f pipeline/pyproject.toml ]; then
-            pip install -e './pipeline[test]' pytest
+            pip install -e './pipeline[dev]' pytest
             pytest pipeline/tests -q
           else
             echo 'Pipeline has not been handed off. Serving-plane CI does not certify pipeline readiness.' >> "$GITHUB_STEP_SUMMARY"

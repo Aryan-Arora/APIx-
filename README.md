@@ -6,7 +6,7 @@ A read-only airfare price-index API and dashboard for SIH 2026, PS 26056. It dis
 
 ## Current delivery status
 
-Engineer B's serving plane is implemented in `api/` and `web/`. Engineer A owns `pipeline/`, `data/`, the schema and index computation. Mock mode is explicit (`USE_MOCK=1`); it is never a fallback for a failing database. Mock live-only series are empty. No live scrape runs or reference accuracy scores are invented.
+Engineer B's serving plane is implemented in `api/` and `web/`. Engineer A owns `pipeline/`, `data/`, the schema and index computation. A’s branch has been integrated into `feat/api-web`; the local SQLite pipeline has generated 11,500 synthetic quotes across 46 dates and 1,176 index rows. No live quotes exist. Known pipeline-method/backtest issues are recorded in [handoff notes](HANDOFF_NOTES.md). Mock mode is explicit (`USE_MOCK=1`); it is never a fallback for a failing database. Mock live-only series are empty. No live scrape runs or reference accuracy scores are invented.
 
 Public deployment URLs: pending account/service configuration and integration. Do not interpret a passing serving-plane test as proof of live data, published backtest accuracy, or pipeline readiness.
 
@@ -18,7 +18,7 @@ Python 3.11 and Node.js 22 are the deployment/CI targets.
 cd api
 python3.11 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.lock.txt
 USE_MOCK=1 API_KEYS=apix-local-demo uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 

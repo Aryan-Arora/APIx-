@@ -229,3 +229,50 @@ def test_sql_all_scopes_and_endpoints(sql_client):
     ).json()
     assert result[0]["avg_fare"] == 1500
     assert result[0]["index"] == 110
+
+
+def test_noncanonical_stored_route_alias(sql_client):
+    with sql_client.app.state.store.engine.begin() as conn:
+        conn.execute(text("UPDATE routes SET route_id='DEL-BOM'"))
+        conn.execute(text("UPDATE clean_quotes SET route_id='DEL-BOM'"))
+        conn.execute(
+            text(
+                "UPDATE index_values SET scope='route:DEL-BOM' WHERE scope='route:BOM-DEL'"
+            )
+        )
+    assert len(sql_client.get("/api/v1/index?scope=route:BOM-DEL").json()) == 4
+    assert sql_client.get("/api/v1/quotes?route=BOM-DEL").json()["total"] == 6
+    assert (
+        len(sql_client.get("/api/v1/lead-curve?route=BOM-DEL&date=2026-09-28").json())
+        == 2
+    )
+
+
+def test_pipeline_metric_aliases_and_placeholder_suppression(sql_client):
+    with sql_client.app.state.store.engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO backtest_summary VALUES ('correlation_vs_cpi_transport_group',0.8,'PLACEHOLDER inputs')"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO backtest_summary VALUES ('MAPE_vs_dgca_fares',98,'Legacy comparison')"
+            )
+        )
+    result = sql_client.get("/api/v1/backtest").json()
+    assert result["summary"] == {"mape": None, "corr": None, "direction": None}
+    assert any("index points" in n for n in result["notes"])
+    assert any("PLACEHOLDER" in n for n in result["notes"])
+    with sql_client.app.state.store.engine.begin() as conn:
+        conn.execute(
+            text(
+                "UPDATE backtest_summary SET note='Verified CPI series' WHERE metric='correlation_vs_cpi_transport_group'"
+            )
+        )
+    assert sql_client.get("/api/v1/backtest").json()["summary"]["corr"] == 0.8
+
+
+def test_naive_pipeline_timestamps_are_utc(sql_client):
+    quote = sql_client.get("/api/v1/quotes?limit=1").json()["items"][0]
+    assert quote["scraped_at"].endswith("Z")

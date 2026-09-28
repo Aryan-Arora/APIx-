@@ -1,10 +1,22 @@
 """Validated public response contracts; additive fields carry provenance."""
 
 from datetime import date as Date
-from datetime import datetime
-from typing import Literal
+from datetime import datetime, timezone
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict
+
+
+def as_utc(value: datetime) -> datetime:
+    """Pipeline SQLite timestamps are naive UTC; serialize them unambiguously."""
+    return (
+        value.replace(tzinfo=timezone.utc)
+        if value.tzinfo is None
+        else value.astimezone(timezone.utc)
+    )
+
+
+UTCTimestamp = Annotated[datetime, AfterValidator(as_utc)]
 
 
 class IndexPoint(BaseModel):
@@ -57,7 +69,7 @@ class Carrier(BaseModel):
 class Quote(BaseModel):
     model_config = ConfigDict(extra="allow")
     id: int
-    scraped_at: datetime
+    scraped_at: UTCTimestamp
     source: str
     route_id: str
     carrier: str | None = None
@@ -78,8 +90,8 @@ class QuotePage(BaseModel):
 
 class Run(BaseModel):
     id: int
-    started_at: datetime
-    finished_at: datetime | None
+    started_at: UTCTimestamp
+    finished_at: UTCTimestamp | None
     source: str
     status: str
     quotes_count: int
@@ -111,7 +123,7 @@ class Backtest(BaseModel):
 class Health(BaseModel):
     status: str
     db: str
-    last_scrape_at: datetime | None
+    last_scrape_at: UTCTimestamp | None
     version: str
     data_mode: Literal["mock", "database"]
 
