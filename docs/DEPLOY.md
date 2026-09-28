@@ -65,3 +65,12 @@ Do not run a public build with a localhost API base. See [Vercel Next.js docs](h
 - Save actual live URLs and the deployment commit in README.
 
 Before a demo, request `/health` a minute ahead to wake a free Render instance. Avoid claiming a guaranteed sub-three-second cold start. No recurring keep-warm automation is installed by this scaffold.
+
+## Session status (2026-09-28)
+
+- GitHub repo: https://github.com/Aryan-Arora/APIx-, branch `feat/api-web`.
+- Vercel CLI is authenticated; no APIx Vercel project was deployed while its API URL was unavailable.
+- Render dashboard requires sign-in. No public API URL or production DATABASE_URL was supplied.
+- Local dashboard: http://localhost:3000. Local API: http://localhost:8100/api/v1; docs: http://localhost:8100/docs. Port 8000 was already occupied by another application, so the local preview uses 8100.
+- Local API is in `USE_MOCK=0` mode against root `apix.db`, populated by A's simulator. The rows are synthetic, not live-scraped.
+- To reproduce locally from the integrated branch: install `pipeline[dev]`, run `backfill --days 45`, `compute-index`, and `backtest` against an absolute SQLite DATABASE_URL; start the API with that same URL and set the web's `.env.local` base to the selected port. Commands and pipeline ownership remain as described above.

@@ -266,6 +266,7 @@ function Chart({
             />
             <Tooltip formatter={(v) => money(Number(v))} />
             <Bar
+              isAnimationActive={false}
               dataKey="avg_fare"
               name="Average fare"
               fill="#0b2a5b"
@@ -286,6 +287,7 @@ function Chart({
             />
             <Tooltip formatter={(v) => money(Number(v))} />
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="avg_fare"
               name="Average fare"
@@ -322,6 +324,7 @@ function Chart({
               formatter={(v) => [num(Number(v)), "APIx"]}
             />
             <Area
+              isAnimationActive={false}
               type="monotone"
               dataKey="value"
               stroke="#0b2a5b"
@@ -334,6 +337,50 @@ function Chart({
     </div>
   );
 }
+function FareReferenceChart({ rows }: { rows: Backtest["rows"] }) {
+  return (
+    <div
+      className="chart"
+      role="img"
+      aria-label="Pipeline average airfare versus reference airfare in INR"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={rows.map((row) => ({
+            ...row,
+            period: `${row.month.slice(0, 7)} · ${row.route_id}`,
+          }))}
+          margin={{ top: 20, right: 25, left: 15, bottom: 10 }}
+        >
+          <CartesianGrid vertical={false} stroke="#e7ecf2" />
+          <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+          <YAxis
+            tickFormatter={(value) =>
+              `₹${Number(value).toLocaleString("en-IN")}`
+            }
+            tick={{ fontSize: 11 }}
+          />
+          <Tooltip formatter={(value) => money(Number(value))} />
+          <Line
+            isAnimationActive={false}
+            dataKey="apix_avg_fare"
+            name="Pipeline average fare (INR)"
+            stroke="#0b2a5b"
+            strokeWidth={2}
+          />
+          <Line
+            isAnimationActive={false}
+            dataKey="dgca_avg_fare"
+            name="Reference fare (INR)"
+            stroke="#bd620d"
+            strokeWidth={2}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function Delta({ value }: { value?: number | null }) {
   return (
     <span className="delta">
@@ -484,7 +531,7 @@ export default function Dashboard() {
           <div className="breadcrumb">
             <button
               className="icon-button mobile-toggle"
-              aria-label="Open navigation"
+              aria-label={mobileNav ? "Close navigation" : "Open navigation"}
               onClick={() => setMobileNav(!mobileNav)}
             >
               {mobileNav ? <X size={20} /> : <Menu size={20} />}
@@ -563,6 +610,7 @@ export default function Dashboard() {
               <span>Include simulated history</span>
               <input
                 type="checkbox"
+                aria-label="Include simulated history"
                 checked={synthetic}
                 onChange={(e) => setSynthetic(e.target.checked)}
               />
@@ -779,7 +827,7 @@ export default function Dashboard() {
                                   title={`${r} · ${d}: ${value == null ? "missing" : metric === "index" ? num(value) : money(value)}`}
                                   style={{
                                     background: `rgba(11,42,91,${intensity})`,
-                                    color: intensity > 0.5 ? "#fff" : "#0b2a5b",
+                                    color: intensity >= 0.64 ? "#fff" : "#000",
                                   }}
                                 >
                                   {value == null
@@ -839,8 +887,8 @@ export default function Dashboard() {
                         {saving >= 0 ? "lower" : "higher"} average fare at T+45
                       </strong>
                       <p>
-                        Compared with T+1 for this selection. An observed
-                        cross-section, not a prediction or a causal saving
+                        Compared with T+1 for this selection. A cross-sectional
+                        comparison, not a prediction or a causal saving
                         estimate.
                       </p>
                     </div>
@@ -898,7 +946,9 @@ export default function Dashboard() {
                         <tr key={r.carrier}>
                           <td>
                             {carrierNames[r.carrier] || r.carrier}{" "}
-                            <small>{r.carrier}</small>
+                            {carrierNames[r.carrier] && (
+                              <small>{r.carrier}</small>
+                            )}
                           </td>
                           <td>{money(r.avg_fare)}</td>
                           <td>{num(r.index)}</td>
@@ -963,6 +1013,18 @@ export default function Dashboard() {
                     {note}
                   </p>
                 ))}
+                {backtest.data &&
+                  backtest.data.rows.length > 0 &&
+                  !backtest.data.notes.some((note) =>
+                    /placeholder|index points/i.test(note),
+                  ) &&
+                  backtest.data.rows.every(
+                    (row) =>
+                      row.apix_avg_fare != null &&
+                      row.dgca_avg_fare != null &&
+                      /INR/i.test(row.source_note) &&
+                      !/placeholder/i.test(row.source_note),
+                  ) && <FareReferenceChart rows={backtest.data.rows} />}
                 {!backtest.data?.rows.length ? (
                   <div className="state">
                     <Landmark size={28} />

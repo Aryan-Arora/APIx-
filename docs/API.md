@@ -34,3 +34,5 @@ curl 'http://localhost:8000/api/v1/quotes?route=DEL-BOM&limit=10&include_synthet
 ```
 
 Backtest fields `apix_avg_fare` and `dgca_avg_fare` are inherited from the frozen schema. CPI indices must not be inserted as rupee fares. Metric units and interpretation must be in source_note/summary notes. The serving plane does not invent a reference or replace null scores with zero. A schema amendment for CPI index-specific results remains an integration question in HANDOFF_NOTES.md.
+
+Integration with A's current summary names is supported. Placeholder-reference scores are withheld (null) with explanatory notes. `MAPE_vs_dgca_fares` is withheld because the integrated apix-v1 implementation currently compares index points with rupee fares; A must supply a corrected metric before it can be used. A fare-comparison chart renders only when every row explicitly identifies INR in source_note and no placeholder/unit-error warning remains.

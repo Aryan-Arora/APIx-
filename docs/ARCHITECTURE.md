@@ -33,3 +33,7 @@ One API process has its own rolling-minute rate limiter. Proxy headers are not t
 Database connections use a small SQLAlchemy pool (three persistent plus two overflow). Use the Supabase session pooler for persistent IPv4 backends. The browser never receives DATABASE_URL or a Supabase service-role key. It does receive the explicitly public read-only demo API key.
 
 No API response cache is enabled in v1, so provenance toggles cannot accidentally serve stale cross-mode data. Larger histories require bounded queries, batching heatmap scopes, and authenticated cache/rate-limit infrastructure.
+
+## First integration result
+
+A's branch at d2d5193 has been merged without edits to A-owned files. API route aliases resolve against the stored route table, including the non-alphabetical BOM-BLR entry. Naive pipeline timestamps are serialized as UTC. All endpoints were exercised against the generated SQLite DB: 46 daily observations, ten route series, 460 heatmap cells, five carriers, five lead buckets. Live-only series/quotes are empty because the dataset is entirely synthetic. Methodology text calls out the observed trim/calendar-day deviations until A corrects them.

@@ -85,3 +85,11 @@ in parallel:
 - **A action required: index contract drift.** `trimmed_geo_mean(trim=0.10)` currently trims 5% per tail (`trim/2`), while frozen contract says 10% per tail. Carry-forward iterates only observed dates, so three missing *observations* can exceed three calendar days. Base-period selection also uses first seven observed dates. Please correct/test calendar-day semantics and tail trimming. B's methodology now distinguishes the intended contract from these observed implementation limits.
 - **A action required: route naming.** routes.csv contains BOM-BLR although alphabetical canonical is BLR-BOM. API will resolve an airport-pair alias to its existing stored route ID so users can access these rows without rewriting A's data. Please standardise IDs in the pipeline at the next sync.
 - Backfill --days 45 produces 46 calendar dates (inclusive offsets 45 through 0); local integration generated 11,500 quotes and 1,176 index rows. All are synthetic. Pipeline's existing 28 tests pass, but do not cover the mismatches above.
+
+## Serving-plane verification complete
+
+- API tests: 21 passing on Python 3.11.15. Pipeline tests: 28 passing. Next.js lint/typecheck/build passing.
+- GitHub CI all three jobs passed at 820eb6a: https://github.com/Aryan-Arora/APIx-/actions/runs/36461782657.
+- Every endpoint was exercised against the populated SQLite database. All ten route series return 46 daily points; live-only data is empty.
+- Local preview runs on localhost:3000; API/docs on localhost:8100. DB mode is enabled with all-synthetic pipeline data. No A-owned source files were edited.
+- Render sign-in and production DATABASE_URL remain needed. Vercel is authenticated, but web deployment waits for a reachable API origin. No production/live-data claim is made.
