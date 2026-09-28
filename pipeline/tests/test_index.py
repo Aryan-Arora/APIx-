@@ -30,11 +30,12 @@ def test_trimmed_geo_mean_single_value():
 
 
 def test_trimmed_geo_mean_trims_tails():
-    # 10 values 1..10, trim 10% total (5% each tail) -> drop none since
-    # floor(10*0.05)=0 -> geometric mean of all 10.
+    # 10 values 1..10, trim 10% off EACH tail -> floor(10*0.10)=1 dropped
+    # from each side, leaving values 2..9 (8 values).
     vals = [float(v) for v in range(1, 11)]
     gm = index.trimmed_geo_mean(vals)
-    expected = math.exp(sum(math.log(v) for v in vals) / len(vals))
+    kept = vals[1:9]
+    expected = math.exp(sum(math.log(v) for v in kept) / len(kept))
     assert abs(gm - expected) < 1e-9
 
 

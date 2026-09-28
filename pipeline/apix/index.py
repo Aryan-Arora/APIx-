@@ -30,13 +30,14 @@ CARRY_FORWARD_MAX_DAYS = 3
 
 
 def trimmed_geo_mean(values: list[float], trim: float = TRIM_FRACTION) -> float | None:
-    """10%-trimmed geometric mean (5% off each tail by default trim=0.10
-    total, i.e. `trim/2` off each side)."""
+    """Geometric mean trimming `trim` fraction off EACH tail (per spec:
+    "trim 10% each tail" -> trim=0.10 removes 10% from the low end and
+    10% from the high end, 20% total)."""
     vals = sorted(v for v in values if v and v > 0)
     n = len(vals)
     if n == 0:
         return None
-    k = int(math.floor(n * (trim / 2)))
+    k = int(math.floor(n * trim))
     trimmed = vals[k: n - k] if n - 2 * k > 0 else vals
     if not trimmed:
         return None
@@ -120,7 +121,9 @@ def compute_daily_index(clean_quotes: list[dict], route_weights: dict[str, float
     """
     if not clean_quotes:
         return {}
-    all_days = sorted({q["obs_date"] for q in clean_quotes})
+    obs_days = {q["obs_date"] for q in clean_quotes}
+    start, end = min(obs_days), max(obs_days)
+    all_days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
     if base_period_days is None:
         base_period_days = all_days[:7]
 

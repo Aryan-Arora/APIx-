@@ -35,7 +35,7 @@ LEAD_BUCKETS = {"T+1": 1, "T+7": 7, "T+15": 15, "T+30": 30, "T+45": 45}
 ROUTE_BASE = {
     "BOM-DEL": 6200,
     "BLR-DEL": 6400,
-    "BOM-BLR": 4600,
+    "BLR-BOM": 4600,
     "CCU-DEL": 6800,
     "BLR-HYD": 4100,
     "DEL-MAA": 7200,

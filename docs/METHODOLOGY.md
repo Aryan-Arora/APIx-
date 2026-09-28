@@ -11,8 +11,9 @@ before departure), because a fare booked tomorrow behaves very
 differently from one booked six weeks out.
 
 Every day, for every (route, lead-time-bucket) combination, we take all
-the fresh fare quotes we collected, throw out the extreme 10% (5% off
-each end) to avoid a handful of freak prices skewing things, and average
+the fresh fare quotes we collected, throw out the extreme prices (the
+bottom 10% and top 10%, 20% total) to avoid a handful of freak prices
+skewing things, and average
 the rest using a *geometric* mean (appropriate for price ratios/indices).
 That gives one "elementary price" per cell per day. We compare each
 cell's price today to its price in the base period, take the log of that
@@ -36,7 +37,7 @@ scope.
    ```
    P[r,b,t] = TrimmedGeoMean(total_fare for clean, non-sold-out,
                               non-outlier quotes in that cell on day t;
-                              trim 10% total, 5% off each tail)
+                              trim 10% off each tail, 20% total)
    ```
 
 2. **Base price**, `P0[r,b]` = mean of `P[r,b,t]` over the first 7 days
