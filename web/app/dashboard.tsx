@@ -10,6 +10,9 @@ import {
   ChevronRight,
   Code2,
   Database,
+  Download,
+  ArrowUpRight,
+  CalendarDays,
   Grid2X2,
   Landmark,
   Menu,
@@ -147,7 +150,9 @@ const carrierNames: Record<string, string> = {
 };
 
 function useApi<T>(path: string | null, refresh: number): Resource<T> {
-  const [state, setState] = useState<Resource<T> & { path?: string }>({
+  const [state, setState] = useState<
+    Resource<T> & { path?: string; refresh?: number }
+  >({
     loading: true,
   });
   useEffect(() => {
@@ -168,13 +173,14 @@ function useApi<T>(path: string | null, refresh: number): Resource<T> {
           mode: response.headers.get("X-Data-Mode") || undefined,
         };
       })
-      .then((result) => setState({ ...result, path, loading: false }))
+      .then((result) => setState({ ...result, path, refresh, loading: false }))
       .catch((error) => {
         if (!controller.signal.aborted)
-          setState({ path, loading: false, error: error.message });
+          setState({ path, refresh, loading: false, error: error.message });
         else if (controller.signal.reason?.name === "AbortError")
           setState({
             path,
+            refresh,
             loading: false,
             error:
               "Request timed out. The API may be waking up; retry in a moment.",
@@ -186,7 +192,9 @@ function useApi<T>(path: string | null, refresh: number): Resource<T> {
       controller.abort("cancelled");
     };
   }, [path, refresh]);
-  return state.path === path ? state : { loading: true };
+  return state.path === path && state.refresh === refresh
+    ? state
+    : { loading: true };
 }
 function Status<T>({
   resource,
@@ -231,7 +239,7 @@ function Chart({
   data: (Point | Lead | Carrier)[];
   kind?: "index" | "lead" | "carrier";
 }) {
-  const common = { stroke: "#e7ecf2", vertical: false };
+  const common = { stroke: "#e7ecf2", vertical: false, strokeDasharray: "3 5" };
   const axis = {
     tick: { fontSize: 11, fill: "#718096" },
     axisLine: false,
@@ -303,7 +311,7 @@ function Chart({
           >
             <defs>
               <linearGradient id="indexFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#466d9b" stopOpacity={0.2} />
+                <stop offset="0%" stopColor="#466d9b" stopOpacity={0.16} />
                 <stop offset="100%" stopColor="#466d9b" stopOpacity={0} />
               </linearGradient>
             </defs>
@@ -328,7 +336,8 @@ function Chart({
               type="monotone"
               dataKey="value"
               stroke="#0b2a5b"
-              strokeWidth={2.8}
+              strokeWidth={3}
+              activeDot={{ r: 6, stroke: "#fff", strokeWidth: 3 }}
               fill="url(#indexFill)"
             />
           </AreaChart>
@@ -383,8 +392,10 @@ function FareReferenceChart({ rows }: { rows: Backtest["rows"] }) {
 
 function Delta({ value }: { value?: number | null }) {
   return (
-    <span className="delta">
-      {value == null ? "Unavailable" : `${value >= 0 ? "+" : ""}${num(value)}%`}
+    <span
+      className={`delta ${value == null ? "neutral" : value < 0 ? "falling" : "rising"}`}
+    >
+      {value == null ? "—" : `${value >= 0 ? "+" : ""}${num(value)}%`}
     </span>
   );
 }
@@ -395,6 +406,7 @@ export default function Dashboard() {
   const [freq, setFreq] = useState("daily");
   const [route, setRoute] = useState("all");
   const [metric, setMetric] = useState("index");
+  const [windowDays, setWindowDays] = useState(0);
   const [refresh, setRefresh] = useState(0);
   const [mobileNav, setMobileNav] = useState(false);
   const modeQuery = `include_synthetic=${synthetic}`;
@@ -461,9 +473,59 @@ export default function Dashboard() {
     firstLead && lastLead && firstLead.avg_fare > 0
       ? (1 - lastLead.avg_fare / firstLead.avg_fare) * 100
       : null;
+  const series = index.data || [];
+  const lastDate = series.at(-1)?.date;
+  const cutoff =
+    lastDate && windowDays
+      ? new Date(lastDate).getTime() - (windowDays - 1) * 86400000
+      : null;
+  const visibleSeries =
+    cutoff == null
+      ? series
+      : series.filter((point) => new Date(point.date).getTime() >= cutoff);
+  const rangeLow = visibleSeries.length
+    ? Math.min(...visibleSeries.map((point) => point.value))
+    : null;
+  const rangeHigh = visibleSeries.length
+    ? Math.max(...visibleSeries.map((point) => point.value))
+    : null;
+  function exportSeries() {
+    const csv = [
+      "date,index,quote_count,includes_synthetic,frequency",
+      ...visibleSeries.map((point) =>
+        [
+          point.date,
+          point.value,
+          point.n_quotes,
+          point.includes_synthetic,
+          freq,
+        ].join(","),
+      ),
+    ].join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `apix-${freq}-${synthetic ? "combined" : "observed"}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  useEffect(() => {
+    if (!mobileNav) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileNav(false);
+        document.querySelector<HTMLButtonElement>(".mobile-toggle")?.focus();
+      }
+    };
+    document.addEventListener("keydown", close);
+    return () => document.removeEventListener("keydown", close);
+  }, [mobileNav]);
   function navigate(value: Section) {
     setSection(value);
     setMobileNav(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   return (
@@ -478,7 +540,7 @@ export default function Dashboard() {
           onClick={() => setMobileNav(false)}
         />
       )}
-      <aside className={`sidebar ${mobileNav ? "open" : ""}`}>
+      <aside id="navigation" className={`sidebar ${mobileNav ? "open" : ""}`}>
         <Link className="brand" href="/" aria-label="APIx home">
           <span className="brand-icon">
             <Plane size={23} />
@@ -488,7 +550,9 @@ export default function Dashboard() {
             <small>AIRFARE PRICE INDEX</small>
           </span>
         </Link>
-        <div className="workspace-label">INDIA AIRFARE OBSERVATORY</div>
+        <div className="workspace-label">
+          WORKSPACE <span>01</span>
+        </div>
         <nav aria-label="Main navigation">
           {sections.map((name, i) => {
             const Icon = [
@@ -532,6 +596,8 @@ export default function Dashboard() {
             <button
               className="icon-button mobile-toggle"
               aria-label={mobileNav ? "Close navigation" : "Open navigation"}
+              aria-expanded={mobileNav}
+              aria-controls="navigation"
               onClick={() => setMobileNav(!mobileNav)}
             >
               {mobileNav ? <X size={20} /> : <Menu size={20} />}
@@ -551,11 +617,20 @@ export default function Dashboard() {
         <main id="main">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">DOMESTIC AVIATION · INDIA</div>
+              <div className="eyebrow">
+                <span className="eyebrow-line" /> INDIA AIRFARE OBSERVATORY
+              </div>
               <h1>
-                {section === "Overview"
-                  ? "The airfare economy, in focus."
-                  : section}
+                {section === "Overview" ? (
+                  <>
+                    A clearer view of <br className="hero-break" />
+                    <span className="heading-accent">
+                      India’s airfare economy.
+                    </span>
+                  </>
+                ) : (
+                  section
+                )}
               </h1>
               <p>
                 {section === "Overview"
@@ -582,10 +657,11 @@ export default function Dashboard() {
             </div>
             <button
               className="button secondary refresh"
+              aria-label="Refresh data"
               onClick={() => setRefresh((x) => x + 1)}
             >
-              <RefreshCw size={15} />
-              Refresh data
+              <RefreshCw size={15} className={health.loading ? "spin" : ""} />
+              {health.loading ? "Refreshing…" : "Refresh data"}
             </button>
           </div>
           <div className="provenance-bar">
@@ -711,18 +787,74 @@ export default function Dashboard() {
                     {synthetic ? "SIMULATED HISTORY INCLUDED" : "LIVE ONLY"}
                   </span>
                 </div>
-                <Status resource={index} empty={!index.data?.length}>
-                  <Chart data={index.data || []} />
+                <div className="chart-toolbar">
+                  <div className="range-controls" aria-label="Chart time range">
+                    <CalendarDays size={15} aria-hidden="true" />
+                    {[
+                      [14, "2 weeks"],
+                      [30, "1 month"],
+                      [0, "All history"],
+                    ].map(([days, label]) => (
+                      <button
+                        key={days}
+                        className={windowDays === days ? "selected" : ""}
+                        aria-pressed={windowDays === days}
+                        onClick={() => setWindowDays(Number(days))}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    className="export-button"
+                    disabled={!visibleSeries.length || index.loading}
+                    onClick={exportSeries}
+                  >
+                    <Download size={14} /> Export CSV
+                  </button>
+                </div>
+                <Status resource={index} empty={!visibleSeries.length}>
+                  <Chart data={visibleSeries} />
                 </Status>
                 <div className="panel-footer">
-                  <span>Index points · base 100</span>
+                  <span className="chart-range">
+                    Range{" "}
+                    <strong>
+                      {num(rangeLow)} — {num(rangeHigh)}
+                    </strong>
+                    <span> · base 100</span>
+                  </span>
                   <span>
-                    {index.data?.length
-                      ? `${shortDate(index.data[0].date)} — ${shortDate(index.data[index.data.length - 1].date)}`
+                    {visibleSeries.length
+                      ? `${shortDate(visibleSeries[0].date)} — ${shortDate(visibleSeries[visibleSeries.length - 1].date)}`
                       : "Awaiting observations"}
                   </span>
                 </div>
               </article>
+              <div className="basket-strip">
+                <div>
+                  <span className="basket-icon">
+                    <Plane size={19} />
+                  </span>
+                  <span>
+                    <strong>The domestic basket</strong>
+                    <small>Representative routes · fixed weights</small>
+                  </span>
+                </div>
+                <div className="route-chips">
+                  {routes.data?.slice(0, 4).map((item) => (
+                    <span key={item.route_id}>
+                      {item.origin}
+                      <i>↔</i>
+                      {item.dest}
+                    </span>
+                  ))}
+                </div>
+                <button onClick={() => navigate("Sector heatmap")}>
+                  Explore {routes.data?.length || "all"} routes{" "}
+                  <ArrowUpRight size={16} />
+                </button>
+              </div>
               <div className="overview-bottom">
                 <article className="panel explore-panel">
                   <div className="panel-header">

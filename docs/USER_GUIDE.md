@@ -14,3 +14,9 @@ The amber provenance strip contains “Include simulated history.” Enabled sel
 - **API access:** endpoint directory, an executable curl example and interactive OpenAPI documentation.
 
 Use **Refresh data** after the pipeline runs or when a sleeping backend wakes up. A database failure appears as an error instead of showing mock numbers. Narrow-screen navigation opens with the menu button. All principal controls are keyboard accessible.
+
+### Chart ranges and download
+
+On Overview, choose Daily, Weekly or Monthly, then 2 weeks, 1 month or All history. The range is measured backwards from the latest available period date, not today's date. The footer shows the displayed date range and minimum/maximum index values. Export CSV downloads the currently displayed series, including frequency, quote count and the synthetic-data flag. Export is disabled while loading or when the selection has no observations.
+
+On mobile, open the navigation menu to switch sections. Escape dismisses it and returns focus to the menu button. Reduced-motion preferences are respected.

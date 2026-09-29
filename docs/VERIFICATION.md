@@ -32,3 +32,10 @@ After merging shared main 62e0713, regenerated a separate `apix-integration-2026
 Integrated shared main 8d11a8d (historical backfill option, CPI reference update and undeployed Fly.io configuration). Official December 2025 CPI release Annex-I lists Combined Transport and communication as 172.4 for November 2025 and 172.3 for December 2025, matching the committed CSV: https://cpi.mospi.gov.in/PDFile/Press/PR%20December%202025.pdf . This verifies those reference observations, not the synthetic APIx series or a meaningful correlation.
 
 The serving API now withholds CPI scores explicitly marked statistically meaningless by the pipeline. A regression test covers the two-month case. Latest observed daily workflow failure (36548484436) is a malformed SQLAlchemy database URL; production scheduling remains unverified. No pipeline-owned source files were edited by B.
+
+## UI refinement — 2026-09-29
+
+- Updated all dashboard sections with a navy navigation rail, clearer typography, consistent cards/tables and responsive controls. Refreshed desktop overview, heatmap, lead-curve and mobile overview screenshots.
+- Added calendar-based chart ranges and CSV export. Browser verification confirmed the two-week selection exported 14 daily rows with synthetic provenance intact.
+- Checked all eight sections, live-only empty state and disabled empty export. Mobile 390px layout has no page overflow; Escape closes navigation and restores trigger focus. Browser error log was empty.
+- Web ESLint, TypeScript and production build passed. Backend files and contracts were not modified in this UI pass.
