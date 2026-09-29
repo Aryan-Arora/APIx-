@@ -1767,3 +1767,64 @@ select {
     transform: none;
   }
 }
+
+/* Branded reload sequence; decorative, not a data-loading progress indicator. */
+.particle-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #102841;
+  color: #edf4fb;
+  animation: intro-exit 300ms ease-out 1900ms forwards;
+}
+.particle-intro canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.intro-caption {
+  position: absolute;
+  top: calc(50% + 100px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #a4b8cb;
+  animation: observatory-fade 250ms var(--ease-out) 1250ms both;
+}
+.intro-skip {
+  position: absolute;
+  right: 32px;
+  bottom: 28px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background: transparent;
+  color: #d2dfeb;
+  border: 1px solid #ffffff30;
+  border-radius: 30px;
+  padding: 12px 20px;
+  font-size: 12px;
+}
+@keyframes intro-exit {
+  to {
+    opacity: 0;
+  }
+}
+@media (max-width: 760px) {
+  .intro-caption {
+    top: calc(50% + 60px);
+    font-size: 8px;
+    letter-spacing: 2.5px;
+  }
+  .intro-skip {
+    bottom: 24px;
+    right: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .particle-intro {
+    display: none;
+  }
+}

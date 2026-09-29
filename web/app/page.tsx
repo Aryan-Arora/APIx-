@@ -1,4 +1,9 @@
 import Dashboard from "./dashboard";
+import ParticleIntro from "./particle-intro";
 export default function Page() {
-  return <Dashboard />;
+  return (
+    <ParticleIntro>
+      <Dashboard />
+    </ParticleIntro>
+  );
 }
