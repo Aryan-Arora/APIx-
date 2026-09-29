@@ -93,3 +93,9 @@ in parallel:
 - Every endpoint was exercised against the populated SQLite database. All ten route series return 46 daily points; live-only data is empty.
 - Local preview runs on localhost:3000; API/docs on localhost:8100. DB mode is enabled with all-synthetic pipeline data. No A-owned source files were edited.
 - Render sign-in and production DATABASE_URL remain needed. Vercel is authenticated, but web deployment waits for a reachable API origin. No production/live-data claim is made.
+
+## Second integration sync — 2026-09-29
+
+- Fast-forwarded feat/api-web to shared main 62e0713, including A's correction 479be55. Tail trimming, calendar-day carry-forward/base-period selection and BLR-BOM canonical naming are resolved. Earlier notes describing these as open are historical.
+- B updated the served methodology to match the corrected engine and regenerated a fresh SQLite dataset at apix-integration-20260929.db, preserving the prior apix.db.
+- Remaining A issues: fare MAPE uses incompatible units; --days 45 yields 46 dates; real adapters remain stubs and references remain placeholders. Invalid/placeholder scores remain withheld.

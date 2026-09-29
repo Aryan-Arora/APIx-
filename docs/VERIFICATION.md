@@ -1,9 +1,9 @@
-# Serving-plane verification — 2026-09-28
+# Serving-plane verification — 2026-09-29
 
 ## Automated checks
 
 - 21 API tests passed under Python 3.11.15; cover auth, rate limiting, CORS, date/range validation, pagination, SQL injection parameter binding, synthetic isolation, aggregation exclusions, stored-route aliases, UTC timestamps, and withheld placeholder/invalid-unit metrics.
-- Engineer A's existing 28 pipeline tests passed. These do not resolve the contract deviations identified in HANDOFF_NOTES.md.
+- Engineer A's existing 28 pipeline tests passed. Reran all 49 API/pipeline tests after integrating A’s correction 479be55.
 - Web ESLint, TypeScript and optimized Next.js build passed.
 - GitHub CI for commit 820eb6a passed API, pipeline and web jobs: https://github.com/Aryan-Arora/APIx-/actions/runs/36461782657.
 
@@ -19,6 +19,10 @@ Desktop: 1920×1080. Verified overview, combined/live-only toggle, index/average
 
 ## Unverified / blocked
 
-Public Render and Vercel deployment, Supabase Postgres connection and latency, real scraping, actual official reference comparison, and daily cron execution. Render is signed out; production DATABASE_URL and official reference data were not supplied. Pipeline method/backtest defects are assigned to Engineer A in handoff notes.
+Public Render and Vercel deployment, Supabase Postgres connection and latency, real scraping, actual official reference comparison, and daily cron execution. Render is signed out; production DATABASE_URL and official reference data were not supplied. The remaining fare-backtest unit defect is assigned to Engineer A in handoff notes.
 
 Mobile verification completed at 390×844: menu opens, selecting Overview closes it, the collapsed navigation is removed from keyboard/accessibility navigation, and the synthetic toggle retains its accessible name. Document width equals viewport width (390px), with no horizontal page overflow or Next.js error overlay. Browser page-error log was empty. Screenshot: docs/img/overview-mobile.png. Desktop heatmap and lead-curve screenshots were visually reviewed.
+
+## Corrected-engine integration
+
+After merging shared main 62e0713, regenerated a separate `apix-integration-20260929.db` using the corrected trimming/calendar logic and canonical route IDs. The running local API now uses this database. Prior screenshots document the earlier integration dataset; automated checks were rerun against the corrected code.

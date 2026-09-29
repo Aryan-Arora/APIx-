@@ -1,0 +1,23 @@
+# Secrets are entered in Render during Blueprint creation.
+services:
+  - type: web
+    name: apix-api
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    healthCheckPath: /api/v1/health
+    buildFilter:
+      paths:
+        - api/**
+        - render.yaml
+    envVars:
+      - key: USE_MOCK
+        value: "0"
+      - key: DATABASE_URL
+        sync: false
+      - key: API_KEYS
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

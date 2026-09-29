@@ -14,10 +14,12 @@ Reference: [Supabase connection guide](https://supabase.com/docs/guides/database
 
 ## 2. Render API
 
+The repository includes `render.yaml` for a free Docker service on `main`. Once this file is merged, choose **New → Blueprint**, connect the repository and enter `DATABASE_URL`, `API_KEYS` and `ALLOWED_ORIGINS` when prompted. It deploys database mode and uses `/api/v1/health` for health checks. Follow the endpoint checks below after provisioning. See the [Render Blueprint specification](https://render.com/docs/blueprint-spec). The manual equivalent follows.
+
 1. Sign into Render. Choose **New → Web Service**.
 2. Connect GitHub and choose `Aryan-Arora/APIx-`. Select the integration branch that contains both engineers' work; for an explicit mock preview use `feat/api-web`.
 3. Name the service `apix-api` (or an available project-specific name). Choose a suitable region and **Docker** runtime.
-4. Set **Root Directory** to `api`. Set **Dockerfile Path** to `./Dockerfile` and Docker build context to the root of that service (`api` in the repo). The Dockerfile copies `requirements.txt` and `app/` relative to this context.
+4. Set **Root Directory** to `api`. Set **Dockerfile Path** to `./Dockerfile` and Docker build context to the root of that service (`api` in the repo). The Dockerfile copies `requirements.lock.txt` and `app/` relative to this context.
 5. Select the free instance type if available. Do not upgrade to a paid instance without choosing that deliberately.
 6. Add environment variables:
    - `USE_MOCK=0` for integrated DB mode; `1` only for an explicitly labelled fixture preview.
@@ -66,11 +68,11 @@ Do not run a public build with a localhost API base. See [Vercel Next.js docs](h
 
 Before a demo, request `/health` a minute ahead to wake a free Render instance. Avoid claiming a guaranteed sub-three-second cold start. No recurring keep-warm automation is installed by this scaffold.
 
-## Session status (2026-09-28)
+## Session status (2026-09-29)
 
 - GitHub repo: https://github.com/Aryan-Arora/APIx-, branch `feat/api-web`.
 - Vercel CLI is authenticated; no APIx Vercel project was deployed while its API URL was unavailable.
 - Render dashboard requires sign-in. No public API URL or production DATABASE_URL was supplied.
 - Local dashboard: http://localhost:3000. Local API: http://localhost:8100/api/v1; docs: http://localhost:8100/docs. Port 8000 was already occupied by another application, so the local preview uses 8100.
-- Local API is in `USE_MOCK=0` mode against root `apix.db`, populated by A's simulator. The rows are synthetic, not live-scraped.
+- Local API is in `USE_MOCK=0` mode against root `apix-integration-20260929.db`, populated by A's simulator. The rows are synthetic, not live-scraped.
 - To reproduce locally from the integrated branch: install `pipeline[dev]`, run `backfill --days 45`, `compute-index`, and `backtest` against an absolute SQLite DATABASE_URL; start the API with that same URL and set the web's `.env.local` base to the selected port. Commands and pipeline ownership remain as described above.

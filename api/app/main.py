@@ -32,10 +32,10 @@ METHOD = dict(
     title="A fixed basket. A consistent measure.",
     formula="APIx(t) = 100 × exp(Σ w[r,b] × ln(P[r,b,t] / P0[r,b]))",
     steps=[
-        "Contract: trim 10% of quotes from each tail in each route/lead cell, then take the geometric mean. Current integrated apix-v1 code trims 5% per tail; correction is pending.",
-        "The base price is the arithmetic mean of elementary prices in the first seven days. Current apix-v1 selects seven observed dates; with continuous history these coincide. Base index is 100.",
+        "For each route and lead bucket, trim 10% of valid quotes from each tail, then take their geometric mean.",
+        "The base price is the arithmetic mean of available elementary prices in the first seven calendar days. Base index is 100.",
         "Multiply route passenger-share weights by advance-purchase weights; combine price relatives geometrically.",
-        "Contract: carry missing cells forward for at most three calendar days. Current apix-v1 counts observed dates instead; calendar-gap correction is pending.",
+        "Carry missing cells forward for at most three calendar days, then drop the cell and renormalise weights.",
         "Weekly and monthly indices are arithmetic means of daily indices. Scoped indices renormalise the restricted basket.",
         "Live-only and combined-history indices are computed separately. Average fare charts use valid quote arithmetic means, not index values.",
     ],
