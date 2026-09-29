@@ -1718,3 +1718,52 @@ select {
     font-size: 48px;
   }
 }
+
+/* Initial page entrance: no timers or artificial data-loading delay. */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --entrance-duration: 220ms;
+}
+@keyframes observatory-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes observatory-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar {
+    animation: observatory-fade 200ms var(--ease-out) both;
+  }
+  .topbar {
+    animation: observatory-enter var(--entrance-duration) var(--ease-out) 30ms
+      both;
+  }
+  .main-wrap > main {
+    animation: observatory-enter var(--entrance-duration) var(--ease-out) 60ms
+      both;
+  }
+}
+.loading .spin {
+  padding: 9px;
+  box-sizing: content-box;
+  border: 1px solid #e0e7ef;
+  border-radius: 50%;
+  background: #f0f4f8;
+}
+@media (hover: none), (pointer: coarse) {
+  .explore-grid > button:hover {
+    transform: none;
+  }
+}
