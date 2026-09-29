@@ -39,17 +39,25 @@ in parallel:
   `backtest_summary`.
 - **Seed / reference data**: `data/reference/` — `routes.csv` (the 10-route
   basket + weights), `lead_weights.json` (booking lead-time bucket
-  weights), plus placeholder DGCA/CPI reference files used by the
-  backtest (see `docs/BACKTEST.md` for caveats on those).
+  weights). `cpi_transport_group_index.csv` is now **real MoSPI CPI
+  data** (3 months, Base 2012=100 — see `docs/BACKTEST.md` for the
+  base-year discontinuity and small-n caveats). `dgca_monthly_fares.csv`
+  is still placeholder.
 - **Running the pipeline locally** (from repo root, after
   `cd pipeline && pip install -e .`):
   ```bash
   python -m apix.pipeline backfill --days 45 && \
+  python -m apix.pipeline backfill --days 60 --end-date 2025-12-31 && \
   python -m apix.pipeline compute-index && \
   python -m apix.pipeline backtest
   ```
-  This populates a local `apix.db` SQLite file (gitignored) with ~45 days
-  of synthetic-but-realistic index history across every scope
+  The **second backfill call is required** for the backtest to have any
+  real overlapping months with the real CPI data (Nov/Dec 2025) — it's
+  additive to the first (different date window, same DB), so the
+  recent-looking demo history from the first call is unaffected. This
+  populates a local `apix.db` SQLite file (gitignored) with both a
+  recent window (~45 days ending today, for the live demo/dashboard)
+  and a Nov–Dec 2025 window (for the real backtest), across every scope
   (`all`, `route:*`, `carrier:*`, `lead:*`) x frequency (`daily`,
   `weekly`, `monthly`) x `includes_synthetic` (`true`/`false`). Point
   `DATABASE_URL` at Postgres/Supabase to use the same commands against a

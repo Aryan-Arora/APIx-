@@ -23,27 +23,48 @@ backtest does two different, more modest things instead:
    route per month. This is a more literal comparison, but only as good
    as the DGCA data behind it.
 
-## Placeholder data caveat — READ THIS
+## Data status: CPI series is real, DGCA fares are still placeholder
 
-**Neither reference dataset used by this backtest is real, official
-data.** Both were unavailable in this build environment:
+- **`data/reference/cpi_transport_group_index.csv` is now real MoSPI
+  data**, sourced directly from official MoSPI CPI monthly press
+  releases (Annex-I and Annex-II), sub-group `6.1.03 "Transport and
+  communication"`, Combined (rural+urban) area, Base Year 2012=100:
+  - Dec 2024: index 171.0
+  - Nov 2025: index 172.4 (Final)
+  - Dec 2025: index 172.3 (Provisional), YoY inflation 0.76%
 
-- `data/reference/cpi_transport_group_index.csv` — placeholder monthly
-  MoSPI CPI Transport & Communication group index values. Every row is
-  marked `PLACEHOLDER` in its `source_note` column. `apix/backtest.py`
-  logs a runtime warning every time this file is loaded, precisely so
-  nobody mistakes it for real data.
-- `data/reference/dgca_monthly_fares.csv` — placeholder DGCA average
-  domestic fares for a couple of routes/months. Also marked
-  `PLACEHOLDER`, also logged as a warning on load.
+  **Base-year discontinuity caveat:** MoSPI's more recent releases
+  (from around mid-2026 onward, e.g. the August 2026 press release)
+  moved to a new Base Year 2024=100 series with a different group
+  structure — the old combined "Transport and communication" sub-group
+  was split into separate COICOP divisions (`07.1`–`07.4` Transport,
+  `08.1`/`08.3` Communication) with no direct like-for-like row. This
+  series therefore stops at Dec 2025 (last month under the old base);
+  we did not attempt to splice the two bases together, since that would
+  require rebasing math that isn't provided by MoSPI and would risk a
+  fabricated join. Extending this series past Dec 2025 requires either
+  (a) more historical old-base releases if MoSPI keeps publishing them
+  in parallel, or (b) an explicit rebasing methodology using an overlap
+  month in both series.
 
-**A human needs to supply the real series** (from MoSPI's monthly CPI
-press releases and DGCA's domestic airfare publications respectively)
-before any correlation, direction-agreement, or MAPE number produced by
-this backtest should be treated as meaningful evidence. Until then, the
-backtest exists to prove the *pipeline* — the shapes, the write path to
-`backtest_results`/`backtest_summary`, the metrics computed — works
-correctly, not to make a real accuracy claim.
+  **Sample size caveat:** only 3 real months exist, and only 2 of them
+  (Nov 2025, Dec 2025) currently overlap with any APIx history (the
+  pipeline additionally backfills a synthetic window ending
+  `2025-12-31` via `--end-date`, specifically so there's a real month
+  to compare against — see `HANDOFF_NOTES.md`). A correlation or
+  direction-agreement computed from 2 overlapping months is
+  **mathematically close to guaranteed to look "perfect" (±1.0 / 100%)
+  and is not statistically meaningful** — `run_backtest` attaches an
+  explicit note to that effect on any summary metric computed from
+  fewer than 6 overlapping months. Treat these numbers as "the pipeline
+  and real data are wired up correctly," not "APIx is validated."
+
+- **`data/reference/dgca_monthly_fares.csv` is still placeholder DGCA
+  average domestic fares.** Real DGCA airfare publications were not
+  supplied; every row is marked `PLACEHOLDER` in `source_note` and
+  `apix/backtest.py` logs a runtime warning on load. Until real DGCA
+  figures are supplied, `MAPE_vs_dgca_fares` and any `backtest_results`
+  rows should be treated as illustrative only, not evidence.
 
 ## What's computed
 
@@ -61,11 +82,14 @@ correctly, not to make a real accuracy claim.
   - `MAPE_vs_dgca_fares` — mean absolute percentage error across all
     route-months compared against DGCA figures.
 
-If there's no month overlap between APIx's history and the (placeholder)
-reference series — which will normally be the case, since the simulator
-generates recent dates and the placeholder CPI rows are dated 2025 —
-the summary metrics come back as `None` with a note explaining why,
-rather than silently reporting a fabricated number.
+If there's no month overlap between APIx's history and the reference
+series, the summary metrics come back as `None` with a note explaining
+why, rather than silently reporting a fabricated number. To guarantee
+overlap with the real CPI months above, `python -m apix.pipeline
+backfill` is run twice in this build: once with defaults (recent
+history, for the live demo/dashboard) and once with `--days 60
+--end-date 2025-12-31` (to cover Nov–Dec 2025, matching the real CPI
+data). See `HANDOFF_NOTES.md` for the exact commands.
 
 ## Where this lives in code
 

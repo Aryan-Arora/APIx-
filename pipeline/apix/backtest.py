@@ -140,17 +140,22 @@ def run_backtest(apix_monthly_all: dict[str, float]) -> tuple[list[dict], list[d
         corr = correlation(apix_vals, cpi_vals)
         dir_agree = direction_agreement(apix_vals, cpi_vals)
 
+        n_note = (
+            f" (n={len(common_months)} overlapping months — not statistically "
+            "meaningful at this sample size; see docs/BACKTEST.md)"
+            if len(common_months) < 6 else ""
+        )
         summary_rows.append({
             "metric": "correlation_vs_cpi_transport_group",
             "value": corr,
             "note": "Pearson correlation, APIx monthly vs MoSPI CPI Transport & "
-                    "Communication group index (PLACEHOLDER data — see BACKTEST.md)",
+                    "communication sub-group index (real MoSPI data)" + n_note,
         })
         summary_rows.append({
             "metric": "direction_agreement_vs_cpi_transport_group",
             "value": dir_agree,
-            "note": "Fraction of months where APIx and CPI group index moved "
-                    "the same direction month-over-month (PLACEHOLDER data)",
+            "note": "Fraction of months where APIx and CPI sub-group index moved "
+                    "the same direction month-over-month (real MoSPI data)" + n_note,
         })
     else:
         summary_rows.append({

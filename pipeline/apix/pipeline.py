@@ -90,7 +90,8 @@ def cli():
 
 @cli.command("backfill")
 @click.option("--days", default=45, show_default=True, help="Days of synthetic history to generate.")
-def backfill_cmd(days: int):
+@click.option("--end-date", default=None, help="Last as-of date (YYYY-MM-DD) of the generated history. Defaults to today.")
+def backfill_cmd(days: int, end_date: str | None):
     engine = db.get_engine()
     db.init_db(engine)
     session = db.get_session(engine)
@@ -101,7 +102,8 @@ def backfill_cmd(days: int):
     session.add(run)
     session.commit()
 
-    quotes = sim.backfill(days=days)
+    end = date.fromisoformat(end_date) if end_date else None
+    quotes = sim.backfill(days=days, end_date=end)
     for fq in quotes:
         session.add(_fare_quote_to_row(fq))
     run.finished_at = datetime.utcnow()
