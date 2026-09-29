@@ -147,7 +147,7 @@ class ScrapeRun(Base):
 
 
 def get_database_url() -> str:
-    return os.environ.get("DATABASE_URL", "sqlite:///apix.db")
+    return os.environ.get("DATABASE_URL") or "sqlite:///apix.db"
 
 
 def get_engine(url: str | None = None):
