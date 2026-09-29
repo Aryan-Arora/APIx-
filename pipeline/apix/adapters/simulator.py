@@ -221,9 +221,10 @@ class SimulatorAdapter(BaseAdapter):
             )
         return quotes
 
-    def backfill(self, days: int = 45) -> list[FareQuote]:
+    def backfill(self, days: int = 45, end_date: date | None = None) -> list[FareQuote]:
         """Generate `days` days of history (scraped_at) for all active
-        routes x all 5 lead buckets x all carriers, ending today.
+        routes x all 5 lead buckets x all carriers, ending on `end_date`
+        (default: today).
 
         For each historical "as-of" day, we simulate what would have been
         quoted for departures at each of the 5 lead-time offsets from
@@ -231,10 +232,10 @@ class SimulatorAdapter(BaseAdapter):
         coverage on every day of history.
         """
         routes = load_routes()
-        today = date.today()
+        end = end_date or date.today()
         all_quotes: list[FareQuote] = []
         for day_offset in range(days, -1, -1):
-            as_of = today - timedelta(days=day_offset)
+            as_of = end - timedelta(days=day_offset)
             for route in routes:
                 for bucket_name, bucket_lead in LEAD_BUCKETS.items():
                     depart_date = as_of + timedelta(days=bucket_lead)
