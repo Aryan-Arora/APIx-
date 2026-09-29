@@ -104,8 +104,13 @@ def backfill_cmd(days: int, end_date: str | None):
 
     end = date.fromisoformat(end_date) if end_date else None
     quotes = sim.backfill(days=days, end_date=end)
-    for fq in quotes:
-        session.add(_fare_quote_to_row(fq))
+    CHUNK = 200
+    for i in range(0, len(quotes), CHUNK):
+        chunk = quotes[i:i + CHUNK]
+        for fq in chunk:
+            session.add(_fare_quote_to_row(fq))
+        session.commit()
+        logger.info("  ...committed %d/%d quotes", min(i + CHUNK, len(quotes)), len(quotes))
     run.finished_at = datetime.utcnow()
     run.status = "ok"
     run.quotes_count = len(quotes)
@@ -172,7 +177,9 @@ def compute_index_cmd():
 
     # Clear and rewrite clean_quotes (idempotent recompute)
     session.query(db.CleanQuote).delete()
-    for r in cleaned:
+    session.commit()
+    CHUNK = 200
+    for i, r in enumerate(cleaned, start=1):
         session.add(db.CleanQuote(
             fare_quote_id=r.get("fare_quote_id"),
             scraped_at=r["scraped_at"],
@@ -200,6 +207,8 @@ def compute_index_cmd():
             is_outlier=r.get("is_outlier", False),
             quality_flag=r.get("quality_flag", "ok"),
         ))
+        if i % CHUNK == 0:
+            session.commit()
     session.commit()
     logger.info("Wrote %d clean_quotes rows.", len(cleaned))
 
@@ -252,6 +261,8 @@ def compute_index_cmd():
                     method_version=index.METHOD_VERSION,
                 ))
                 n_written += 1
+            if n_written % CHUNK == 0:
+                session.commit()
     session.commit()
     logger.info("Wrote %d index_values rows across scopes/frequencies/synthetic modes.", n_written)
 

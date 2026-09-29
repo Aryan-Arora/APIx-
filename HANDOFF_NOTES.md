@@ -13,6 +13,89 @@
 - Mock fixtures are generated only in API memory and explicitly labelled; real-only mode returns empty data in mock mode.
 - Additive provenance fields and include_synthetic filters on quote-derived endpoints will prevent mode mixing; frozen index response fields are preserved.
 
+### Live scraping handoff (2026-09-29, Engineer A -> Engineer B)
+
+Deployment (Fly.io API + Vercel dashboard) and the real-CPI backtest are
+both done and live — see the "Deployment status" section below. The one
+remaining item from the original problem statement is **live scraping**
+(currently all 4 adapters in `pipeline/apix/adapters/` are stubs that
+raise `NotImplementedError`). Handing this to B since it needs a real
+browser + DevTools on the human's laptop, which A (running in a cloud
+container with all airline/OTA domains blocked at the network policy
+level) cannot do directly — only relay through pasted screenshots, which
+is slow.
+
+**What's been tried on IndiGo (goindigo.in), findings so far:**
+- A recon script exists at `pipeline/scripts/explore_indigo.py` (one-off
+  tool, not part of the pipeline CLI) — opens the site in headless
+  Playwright, captures every XHR/fetch response, flags likely
+  fare-related JSON. Run: `python3 scripts/explore_indigo.py --origin
+  BOM --dest DEL`.
+- **Deep-linking directly to a search URL does not work** — IndiGo's
+  booking flow keeps search state client-side (redux/session storage),
+  not in URL query params. A guessed URL
+  (`goindigo.in/booking/book-flight?origin=...&destination=...`)
+  produced a generic "Something went wrong" error page from their own
+  app, not a bot-block. The real results page after a manual search is
+  a static URL (`goindigo.in/book/flight-select.html`) with no params.
+- **The site is NOT simply bot-blocked** — a manual search in a real
+  browser works fine and returns real results ("Choose your preferred
+  flight from Mumbai to Delhi").
+- **IndiGo obfuscates its XHR request names** — Safari DevTools Network
+  tab (filtered to XHR/Fetch) on a real search shows request names like
+  `0HJ2g`, `params`, `0mPB8P`, `491e0abc-8e11-...` — no human-readable
+  names like `/search` or `/fares`. This looks like deliberate scraping
+  resistance (obfuscated + possibly encrypted payloads), not just
+  minification. One clearly-identifiable request,
+  `/C7h-Z3JfVaizxXM.../...`, is almost certainly anti-bot telemetry
+  (PerimeterX/Akamai-style bot-detection sensor), not fare data — skip
+  it.
+- **Not yet confirmed:** whether the `params` or `0HJ2g` responses
+  (2-2.5 KB each, the largest payloads) actually contain fare data in
+  plaintext JSON, or whether they're encrypted/obfuscated blobs. This is
+  the next thing to check — click into one of those responses in
+  DevTools and look at the Preview/Response tab.
+
+**Recommended next steps for B** (with real laptop + DevTools access):
+1. Check the `params` and `0HJ2g` response bodies directly — if
+   readable JSON with fare/price fields, the adapter is close: replicate
+   the request (headers, cookies, CSRF token — note the domain prefix
+   `csrf.min.56934e461ff6c4...` on the Initiator column, suggesting a
+   CSRF token is required) via `httpx`/`requests` or keep it
+   browser-driven via Playwright (`page.on("response")` intercepting
+   the specific obfuscated URL pattern, since the random names likely
+   change per-session/per-load).
+2. If those payloads are encrypted (not plaintext), that's a strong
+   signal to deprioritize IndiGo and instead try an OTA (Ixigo,
+   EaseMyTrip, Cleartrip per SCRAPING.md's original preference order) or
+   another airline's direct site — one of them may have simpler/less
+   obfuscated APIs.
+3. Whatever adapter gets built should live in
+   `pipeline/apix/adapters/{indigo,ixigo,easemytrip,cleartrip}.py`,
+   replacing the relevant stub, following `BaseAdapter`'s interface
+   (`fetch(route, depart_date) -> list[FareQuote]`). Real fetched rows
+   should get `is_synthetic=False`.
+4. If nothing pans out within reasonable time, it's fine to leave this
+   stubbed and documented (already the case in `docs/SCRAPING.md`) —
+   this was always the plan's accepted fallback. Don't sink excessive
+   time into anti-bot reverse-engineering at the expense of anything
+   else still open.
+
+### Deployment status (2026-09-29)
+- API: live at https://apix-api.fly.dev (Fly.io, Postgres via
+  `apix-db` Fly Postgres cluster, region `sin`). `fly.toml` in `api/`.
+- Dashboard: live at https://apix-dashboard-sigma.vercel.app (Vercel).
+- DB seeded with two backfill windows: recent (~45 days ending "today")
+  for the live demo, and Nov-Dec 2025 (`--end-date 2025-12-31`) to
+  overlap the real MoSPI CPI reference months for the backtest.
+- `ALLOWED_ORIGINS` on the Fly API is set to the Vercel dashboard's
+  origin (was CORS-blocked before this).
+- `daily-scrape.yml` GitHub Action is green (was silently failing on
+  every run before — `DATABASE_URL` resolves to `""` not unset in CI
+  when the repo secret isn't configured, and `get_database_url()`
+  wasn't falling back to SQLite for an empty string; fixed in
+  `pipeline/apix/db.py`).
+
 ---
 
 ## Engineer A original handoff (preserved at integration)
