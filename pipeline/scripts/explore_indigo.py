@@ -100,6 +100,17 @@ def main() -> None:
 
         page.wait_for_timeout(8000)  # let async fare-search calls finish
 
+        screenshot_path = Path(f"indigo_screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+        try:
+            page.screenshot(path=str(screenshot_path), full_page=True)
+            print(f"Screenshot saved to: {screenshot_path}")
+        except Exception as e:
+            print(f"Could not take screenshot: {e}")
+
+        print(f"Page title: {page.title()!r}")
+        body_text = page.inner_text("body") if page.query_selector("body") else ""
+        print(f"Page body text (first 500 chars): {body_text[:500]!r}")
+
         browser.close()
 
     out_path = Path(f"indigo_recon_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
