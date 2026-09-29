@@ -1,6 +1,6 @@
 # Demo flow — 1920 × 1080
 
-Before recording: start/open the API and check `/api/v1/health`; wait for a sleeping Render instance. Open the dashboard at 1920×1080, zoom 100%, and confirm the top-right source indicator. Never describe mock fixtures as live data. If no populated DB is connected, introduce this as the serving-plane prototype.
+Live URLs: dashboard at https://apix-dashboard-sigma.vercel.app, API at https://apix-api.fly.dev/api/v1 (docs at `/docs`). Before recording: open `https://apix-api.fly.dev/api/v1/health` and confirm `db: "connected"` — the Fly deployment runs with `min_machines_running = 1`, so there should be no cold start, but check anyway. Open the dashboard at 1920×1080, zoom 100%, and confirm the top-right source indicator. Never describe the synthetic fare data as live/observed — it's simulator-generated and labelled as such throughout.
 
 1. **Overview:** show the headline and chart. Say “This measures relative price movement across a fixed route and booking-horizon basket. Base is 100.” Identify the current data mode and index date.
 2. Toggle **Include simulated history** off. In mock mode, show the honest live-only empty state. If live observations exist, describe only the rows actually returned. Toggle it back on.

@@ -2,6 +2,16 @@
 
 Current deployment supplied by Engineer A: API at https://apix-api.fly.dev, dashboard at https://apix-dashboard-sigma.vercel.app, Fly Postgres cluster `apix-db` in `sin`. Database health and the read-only API smoke check pass. The Render/Supabase instructions below describe the original alternative setup, not the currently running services.
 
+> **What's actually live:** the deployed instances (https://apix-dashboard-sigma.vercel.app,
+> https://apix-api.fly.dev) use **Vercel for the dashboard** (as below) but
+> **Fly.io for both the API and Postgres** (`apix-api` + `apix-db`
+> Fly apps), not Render/Supabase. That path was simpler to drive
+> end-to-end with the tools available at deploy time. The Render/Supabase
+> instructions below are kept as a documented, valid alternative — swap
+> "Render" for "Fly.io" (`fly launch`/`fly deploy`, `fly secrets set`,
+> `fly postgres create`+`attach`) if you want to reproduce the actual
+> live setup instead.
+
 No hosting credentials belong in Git or shared chat logs. Configure secrets in the service dashboards or a local ignored environment file. The public `NEXT_PUBLIC_API_KEY` is intentionally visible to browser users and must only permit read access.
 
 ## 1. Database handoff (Engineer A)
