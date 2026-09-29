@@ -1,7 +1,7 @@
 # Known limitations and acceptance boundaries
 
 1. This serving-plane delivery does not establish that real scraping, backfill, pipeline CI or live deployment succeeded. Those must be verified separately. Mock data is generated solely for interface development and clearly labelled.
-2. No authoritative reference CSV was supplied with the brief. Backtest metrics remain absent until Engineer A supplies reference results. A fabricated MAPE/correlation is never substituted.
+2. A has supplied three historical CPI observations with MoSPI provenance. November/December 2025 values were cross-checked against the official release. The current historical simulation overlaps only two months; small-sample CPI scores remain withheld. DGCA fare references remain placeholders. Real reference values do not turn simulated airfare history into observed validation.
 3. The handoff conflicts: its revised reference is CPI Transport & Communication but its frozen schema and older instructions use DGCA rupee fares. The UI therefore shows provenance-aware evidence tables and avoids plotting unlike units together. A verified same-unit fare dataset can support a comparison chart; a CPI comparison needs an agreed index-specific contract. This open issue is written in HANDOFF_NOTES.md.
 4. The 45-day mock series is not an implementation of the mandated index engine, calibration model or historical backtest. Engineer A must compute and test the real method. All mock quotes are synthetic. Mock source runs are empty.
 5. Basket and lead weights are assumptions until replaced with sourced passenger-share and booking-distribution evidence. Labels state this limitation.

@@ -276,3 +276,23 @@ def test_pipeline_metric_aliases_and_placeholder_suppression(sql_client):
 def test_naive_pipeline_timestamps_are_utc(sql_client):
     quote = sql_client.get("/api/v1/quotes?limit=1").json()["items"][0]
     assert quote["scraped_at"].endswith("Z")
+
+
+def test_small_sample_cpi_scores_are_withheld(sql_client):
+    with sql_client.app.state.store.engine.begin() as conn:
+        for metric, value in [
+            ("correlation_vs_cpi_transport_group", 1.0),
+            ("direction_agreement_vs_cpi_transport_group", 1.0),
+        ]:
+            conn.execute(
+                text("INSERT INTO backtest_summary VALUES (:metric,:value,:note)"),
+                {
+                    "metric": metric,
+                    "value": value,
+                    "note": "Real MoSPI data (n=2 overlapping months — not statistically meaningful at this sample size)",
+                },
+            )
+    result = sql_client.get("/api/v1/backtest").json()
+    assert result["summary"]["corr"] is None
+    assert result["summary"]["direction"] is None
+    assert any("insufficient overlapping months" in note for note in result["notes"])

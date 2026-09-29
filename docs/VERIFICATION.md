@@ -26,3 +26,9 @@ Mobile verification completed at 390×844: menu opens, selecting Overview closes
 ## Corrected-engine integration
 
 After merging shared main 62e0713, regenerated a separate `apix-integration-20260929.db` using the corrected trimming/calendar logic and canonical route IDs. The running local API now uses this database. Prior screenshots document the earlier integration dataset; automated checks were rerun against the corrected code.
+
+## Latest source integration and CPI evidence
+
+Integrated shared main 8d11a8d (historical backfill option, CPI reference update and undeployed Fly.io configuration). Official December 2025 CPI release Annex-I lists Combined Transport and communication as 172.4 for November 2025 and 172.3 for December 2025, matching the committed CSV: https://cpi.mospi.gov.in/PDFile/Press/PR%20December%202025.pdf . This verifies those reference observations, not the synthetic APIx series or a meaningful correlation.
+
+The serving API now withholds CPI scores explicitly marked statistically meaningless by the pipeline. A regression test covers the two-month case. Latest observed daily workflow failure (36548484436) is a malformed SQLAlchemy database URL; production scheduling remains unverified. No pipeline-owned source files were edited by B.

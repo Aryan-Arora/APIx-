@@ -76,3 +76,11 @@ Before a demo, request `/health` a minute ahead to wake a free Render instance. 
 - Local dashboard: http://localhost:3000. Local API: http://localhost:8100/api/v1; docs: http://localhost:8100/docs. Port 8000 was already occupied by another application, so the local preview uses 8100.
 - Local API is in `USE_MOCK=0` mode against root `apix-integration-20260929.db`, populated by A's simulator. The rows are synthetic, not live-scraped.
 - To reproduce locally from the integrated branch: install `pipeline[dev]`, run `backfill --days 45`, `compute-index`, and `backtest` against an absolute SQLite DATABASE_URL; start the API with that same URL and set the web's `.env.local` base to the selected port. Commands and pipeline ownership remain as described above.
+
+## Release verification and recovery
+
+Run `API_BASE=https://<service>/api/v1 API_KEY=<read-only-key> python3 scripts/smoke_api.py` in an environment where secrets are supplied securely. The script verifies database health, auth rejection, response shapes and live-only index provenance. It never prints the key. A successful smoke check does not establish live-source coverage; inspect scraper health and quote provenance separately.
+
+Record the exact deployed commit and both deployment identifiers. Before a change, retain the prior working deployment and confirm database recovery arrangements with the pipeline owner. If the web release fails, restore the previous Vercel deployment and its matching build-time API configuration. If the API fails, roll back to the previous Render deployment. Check health, auth, CORS and the dashboard again. API releases do not migrate the database; schema rollback and backups belong to the data-plane owner.
+
+The newly integrated Fly.io files are an undeployed alternative configuration. Render/Vercel remains the documented launch target. No Fly.io provisioning or billing changes were performed. The web Docker context excludes local environment files and generated dependencies.

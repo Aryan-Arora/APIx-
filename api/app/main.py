@@ -351,6 +351,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "PLACEHOLDER reference inputs: calculated metrics are illustrative and are not published as validation scores.",
             )
             summary = dict(mape=None, corr=None, direction=None)
+        if any("not statistically meaningful" in n.lower() for n in notes):
+            summary["corr"] = None
+            summary["direction"] = None
+            notes.insert(
+                0,
+                "CPI comparison scores are withheld because the pipeline reports insufficient overlapping months for meaningful validation.",
+            )
         if "mape_vs_dgca_fares" in metrics:
             summary["mape"] = None
             notes.insert(

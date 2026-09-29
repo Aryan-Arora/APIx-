@@ -107,3 +107,11 @@ in parallel:
 - Fast-forwarded feat/api-web to shared main 62e0713, including A's correction 479be55. Tail trimming, calendar-day carry-forward/base-period selection and BLR-BOM canonical naming are resolved. Earlier notes describing these as open are historical.
 - B updated the served methodology to match the corrected engine and regenerated a fresh SQLite dataset at apix-integration-20260929.db, preserving the prior apix.db.
 - Remaining A issues: fare MAPE uses incompatible units; --days 45 yields 46 dates; real adapters remain stubs and references remain placeholders. Invalid/placeholder scores remain withheld.
+
+## Launch preparation — Engineer B
+
+- Integrated shared main 8d11a8d without editing A-owned sources. Render/Vercel remains the documented target; Fly files are retained as an undeployed alternative.
+- Cross-checked November/December CPI figures against the official December 2025 release; provenance link is in docs/VERIFICATION.md.
+- API suppresses CPI scores flagged statistically meaningless by the pipeline. 22 API tests plus 28 pipeline tests pass.
+- Added scripts/smoke_api.py, deployment recovery instructions, web Docker context exclusions and docs/TWO_HOUR_LAUNCH_CHECKLIST.md.
+- A action: latest daily workflow fails parsing DATABASE_URL; fix the secret/configuration, then run against persistent storage. Fare-MAPE unit defect and live source stubs remain open. B cannot verify production without hosting/database access.
