@@ -87,3 +87,11 @@ Every adapter invocation — live or simulator — writes a row to the
 caught by `apix/pipeline.py::run_daily_cmd` and logged with
 `status='blocked'` and the adapter's explanatory message, rather than
 silently failing or pretending success.
+
+## Laptop investigation — 2026-09-29
+
+Engineer B inspected the existing Safari flight-results session under the explicit handoff. `params` contained a sensor URL and the inspected `0HJ2g` response contained only `success: true`. Neither is a fare payload; no claim of encrypted fare data is justified from these responses.
+
+The rendered cards expose readable Economy starting fares, flight numbers, times and airports. `apix.adapters.indigo_cards.parse_cards` now parses supplied card text, retaining exact airport pairs and nonstop Economy only. It leaves unknown fee components null and requires a timezone-aware capture time. `data/fixtures/indigo_card_excerpt.md` documents the observed test fixture. It is NOT a fresh collection and is not imported into the demo DB.
+
+Unattended collection remains blocked: automated IndiGo navigation returned the site's generic error and robots retrieval timed out; Ixigo robots retrieval returned 403. Cleartrip robots disallows flight search and API paths, and EaseMyTrip disallows its flight-search listing. This investigation did not bypass these restrictions. Existing live adapters remain disabled; the parser alone is not live-source completion. A permitted source/feed or a reproducible approved browser collection flow is still required.

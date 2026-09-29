@@ -1,0 +1,13 @@
+Flight Mumbai to Delhi, departing at 05:00, duration 02h 10m, Non-stop, fare starts at ₹6,179
+Stretch | Business Starts at ₹24,461
+Economy Starts at ₹6,179
+6E
+656
+05:00
+BOM, T2
+02h 10m
+Non-stop
+DEL, T1
+07:10
+Mumbai - Chhatrapati Shivaji Maharaj International Airport
+Delhi - Indira Gandhi International Airport

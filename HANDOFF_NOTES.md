@@ -198,3 +198,14 @@ in parallel:
 - API suppresses CPI scores flagged statistically meaningless by the pipeline. 22 API tests plus 28 pipeline tests pass.
 - Added scripts/smoke_api.py, deployment recovery instructions, web Docker context exclusions and docs/TWO_HOUR_LAUNCH_CHECKLIST.md.
 - A action: latest daily workflow fails parsing DATABASE_URL; fix the secret/configuration, then run against persistent storage. Fare-MAPE unit defect and live source stubs remain open. B cannot verify production without hosting/database access.
+
+## Live-source investigation — Engineer B, 2026-09-29
+
+User authorized B to execute A's live-scraping handoff, extending B's scope to the parser, its fixtures/tests and scraping notes below.
+
+- Inspected the existing Safari flight-select session and DevTools. `params` returned a sensor URL; the inspected `0HJ2g` response was `{ "success": true }`. Neither contained fares. This is not evidence that the fare payload is encrypted.
+- Visible accessibility rows DO contain Economy starting fares, carrier/flight number, departure time and airport codes. Nearby airports (NMI/HDO/DXN), connections and Stretch/Business options also appear; they must not contaminate a BOM–DEL nonstop economy basket.
+- Added `indigo_cards.parse_cards` and a short observed-card fixture with provenance. Eight parser tests cover economy selection, exact airports, connections, missing fields, invalid times, duplicates and aware timestamps. This is an offline parser, not an automated live adapter. No captured fares were inserted into any database; the session later expired, so freshness cannot be claimed.
+- Automated IndiGo homepage returned “Something went wrong”; robots retrieval timed out. Ixigo robots returned 403. Cleartrip robots disallows `/flights/search*` and `/api/`; EaseMyTrip disallows `/flight-search/listing*`. No blocked search paths, sensor bypass, cookies or tokens were replayed.
+- Next live-source step: obtain an authorized source/feed or establish an allowed, reproducible browser flow, then wire verified date/card capture to this parser. The guessed deep link in explore_indigo.py is not a working search workflow.
+- Production health and read-only API smoke check pass at apix-api.fly.dev. Live-only index remains empty. Vercel renders the older dashboard, and the deployed API still publishes n=2 CPI scores of 1.0; current branch suppresses these. Release update is being checked separately.

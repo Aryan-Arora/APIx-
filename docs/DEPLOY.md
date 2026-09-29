@@ -1,4 +1,6 @@
-# Deployment — Vercel web, Render API, Supabase database
+# Deployment — current Fly.io API and Vercel dashboard
+
+Current deployment supplied by Engineer A: API at https://apix-api.fly.dev, dashboard at https://apix-dashboard-sigma.vercel.app, Fly Postgres cluster `apix-db` in `sin`. Database health and the read-only API smoke check pass. The Render/Supabase instructions below describe the original alternative setup, not the currently running services.
 
 No hosting credentials belong in Git or shared chat logs. Configure secrets in the service dashboards or a local ignored environment file. The public `NEXT_PUBLIC_API_KEY` is intentionally visible to browser users and must only permit read access.
 
