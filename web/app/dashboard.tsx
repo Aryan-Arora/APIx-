@@ -93,6 +93,21 @@ type Run = {
   started_at: string;
   error_msg: string | null;
 };
+type RealQuote = {
+  id: number;
+  scraped_at: string;
+  source: string;
+  route_id: string;
+  carrier: string | null;
+  lead_bucket: string;
+  total_fare: number;
+  depart_date?: string;
+  flight_no?: string | null;
+};
+type QuotePage = {
+  items: RealQuote[];
+  total: number;
+};
 type Backtest = {
   summary: {
     mape: number | null;
@@ -447,6 +462,10 @@ export default function Dashboard() {
   );
   const method = useApi<Method>(
     section === "Methodology" ? "/methodology" : null,
+    refresh,
+  );
+  const realQuotes = useApi<QuotePage>(
+    section === "Overview" ? "/quotes?include_synthetic=false&limit=10" : null,
     refresh,
   );
   const mock = health.data?.data_mode === "mock" || latest.mode === "mock";
@@ -855,6 +874,78 @@ export default function Dashboard() {
                   <ArrowUpRight size={16} />
                 </button>
               </div>
+              <article className="panel">
+                <div className="panel-header">
+                  <div>
+                    <h2>Real observed fares</h2>
+                    <p>
+                      Manually captured, non-synthetic quotes — never a live
+                      feed. See{" "}
+                      <a
+                        href="https://github.com/Aryan-Arora/APIx-/blob/main/docs/MANUAL_CAPTURE.md"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        the capture runbook
+                      </a>
+                      .
+                    </p>
+                  </div>
+                  <span className="badge">
+                    {realQuotes.loading
+                      ? "…"
+                      : `${realQuotes.data?.total ?? 0} CAPTURED`}
+                  </span>
+                </div>
+                {realQuotes.loading ? (
+                  <div className="state loading" role="status">
+                    <RefreshCw size={20} className="spin" /> Loading
+                    observations…
+                  </div>
+                ) : realQuotes.error ? (
+                  <div className="state error" role="alert">
+                    <strong>Data could not be loaded</strong>
+                    <p>{realQuotes.error}</p>
+                  </div>
+                ) : !realQuotes.data?.items.length ? (
+                  <div className="state">
+                    <Plane size={28} />
+                    <strong>No real observations captured yet</strong>
+                    <p>
+                      Live scraping is compliance-blocked (see Methodology).
+                      Real quotes come from a person running an actual search
+                      and pasting the results through{" "}
+                      <code>scripts/capture_indigo.py</code> — see the
+                      capture runbook linked above.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ROUTE</th>
+                          <th>FLIGHT</th>
+                          <th>LEAD BUCKET</th>
+                          <th>FARE</th>
+                          <th>CAPTURED</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {realQuotes.data.items.map((q) => (
+                          <tr key={q.id}>
+                            <td>{q.route_id}</td>
+                            <td>{q.flight_no || "—"}</td>
+                            <td>{q.lead_bucket}</td>
+                            <td>{money(q.total_fare)}</td>
+                            <td>{shortDate(q.scraped_at)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </article>
               <div className="overview-bottom">
                 <article className="panel explore-panel">
                   <div className="panel-header">

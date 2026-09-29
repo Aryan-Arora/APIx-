@@ -1,13 +1,13 @@
 """APIx CLI: python -m apix.pipeline <command>
 
-Commands: backfill, compute-index, backtest, run-daily
+Commands: backfill, compute-index, backtest, run-daily, import-manual-captures
 """
 from __future__ import annotations
 
 import csv
 import json
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 import click
 
@@ -371,6 +371,80 @@ def run_daily_cmd():
 
     # 3) re-clean + recompute index over full history
     compute_index_cmd.callback()
+
+
+@cli.command("import-manual-captures")
+@click.argument("capture_files", nargs=-1, required=True, type=click.Path(exists=True))
+def import_manual_captures_cmd(capture_files: tuple[str, ...]):
+    """Insert human-captured, real (non-synthetic) fare quotes into fare_quotes.
+
+    Reads JSONL files produced by scripts/capture_indigo.py. Never called
+    by run-daily or any automation — a deliberate, explicit step, since
+    these are manual observations, not a live feed. Skips rows whose
+    raw_hash already exists in fare_quotes, so re-running with the same
+    capture file (or overlapping ones) is safe. Does not recompute the
+    index; run `compute-index` afterward to fold these in.
+    """
+    engine = db.get_engine()
+    db.init_db(engine)
+    session = db.get_session(engine)
+    seed_routes(session)
+
+    existing_hashes = {
+        h for (h,) in session.query(db.FareQuote.raw_hash).filter(db.FareQuote.raw_hash.isnot(None))
+    }
+
+    inserted = 0
+    skipped_dupe = 0
+    skipped_synthetic = 0
+    for path in capture_files:
+        with open(path) as f:
+            for lineno, line in enumerate(f, start=1):
+                line = line.strip()
+                if not line:
+                    continue
+                row = json.loads(line)
+                if row.get("is_synthetic"):
+                    skipped_synthetic += 1
+                    logger.warning("%s:%d marked is_synthetic=true; import-manual-captures is for real captures only, skipping", path, lineno)
+                    continue
+                raw_hash = row.get("raw_hash")
+                if raw_hash and raw_hash in existing_hashes:
+                    skipped_dupe += 1
+                    continue
+                fq = FareQuote(
+                    scraped_at=datetime.fromisoformat(row["scraped_at"]),
+                    source=row["source"],
+                    source_type=row["source_type"],
+                    route_id=row["route_id"],
+                    origin=row["origin"],
+                    dest=row["dest"],
+                    depart_date=date.fromisoformat(row["depart_date"]),
+                    total_fare=row["total_fare"],
+                    carrier=row.get("carrier"),
+                    flight_no=row.get("flight_no"),
+                    depart_time=time.fromisoformat(row["depart_time"]) if row.get("depart_time") else None,
+                    lead_days=row.get("lead_days"),
+                    lead_bucket=row.get("lead_bucket"),
+                    fare_class=row.get("fare_class"),
+                    base_fare=row.get("base_fare"),
+                    taxes=row.get("taxes"),
+                    udf=row.get("udf"),
+                    convenience_fee=row.get("convenience_fee"),
+                    currency=row.get("currency", "INR"),
+                    is_sold_out=row.get("is_sold_out", False),
+                    is_synthetic=False,
+                    raw_hash=raw_hash,
+                )
+                session.add(_fare_quote_to_row(fq))
+                if raw_hash:
+                    existing_hashes.add(raw_hash)
+                inserted += 1
+    session.commit()
+    logger.info(
+        "import-manual-captures: inserted %d, skipped %d duplicate(s), skipped %d marked-synthetic row(s). Run `compute-index` to fold these into index_values.",
+        inserted, skipped_dupe, skipped_synthetic,
+    )
 
 
 if __name__ == "__main__":

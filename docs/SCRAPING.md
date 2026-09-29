@@ -95,3 +95,19 @@ Engineer B inspected the existing Safari flight-results session under the explic
 The rendered cards expose readable Economy starting fares, flight numbers, times and airports. `apix.adapters.indigo_cards.parse_cards` now parses supplied card text, retaining exact airport pairs and nonstop Economy only. It leaves unknown fee components null and requires a timezone-aware capture time. `data/fixtures/indigo_card_excerpt.md` documents the observed test fixture. It is NOT a fresh collection and is not imported into the demo DB.
 
 Unattended collection remains blocked: automated IndiGo navigation returned the site's generic error and robots retrieval timed out; Ixigo robots retrieval returned 403. Cleartrip robots disallows flight search and API paths, and EaseMyTrip disallows its flight-search listing. This investigation did not bypass these restrictions. Existing live adapters remain disabled; the parser alone is not live-source completion. A permitted source/feed or a reproducible approved browser collection flow is still required.
+
+## Re-verification and outcome — 2026-09-29
+
+`robots.txt` was re-fetched directly (not a proxy/relayed check) for all four candidate sources, resolving the earlier inconclusive/timed-out results:
+
+- **IndiGo**: `Disallow: /book/*`, `/booking/*`, `/search.html`, `/book-flight.html`
+- **ixigo**: `Disallow: /flights/search`, `/search/result/`
+- **Cleartrip**: `Disallow: /flights/search*`, `/api/`
+- **EaseMyTrip**: `Disallow: /flight-search/listing*`
+
+Every source explicitly disallows the exact path an automated fetch would need. `apix/compliance.py::is_allowed()` fails closed on this by design, so this is a conclusive result, not a temporary gap: **no automated live adapter will be implemented against these four sources.** This isn't a shortfall relative to the project's plan — it's the documented, accepted fallback ("if zero live sources work, stop — the demo uses the simulator").
+
+Two real, non-synthetic data paths remain available and are both implemented:
+
+1. **Manual capture** (`pipeline/scripts/capture_indigo.py`, `docs/MANUAL_CAPTURE.md`): a person — not automation — runs an actual IndiGo search in their own browser and pastes the visible result text through the parser. Robots.txt binds automated agents, not a human reading a page they loaded themselves. This produces occasional real snapshots, never a continuous feed, and is never invoked by `run-daily` or any other automation — landing a capture in the database is always a deliberate, separate step (`python -m apix.pipeline import-manual-captures`).
+2. **A licensed/authorized data provider** (e.g. a flight-data API with an actual terms-of-service grant) remains the correct path to a real automated feed, if one is set up later. Amadeus's free self-service tier — the obvious first candidate — was decommissioned in July 2026 in favor of an enterprise-sales-only access model, which ruled it out for this project's timeline; this wasn't re-attempted for the same date range.
